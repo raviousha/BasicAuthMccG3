@@ -6,3 +6,7 @@ obj/Debug/netcoreapp3.1/BasicAuthMccG3.csproj.AssemblyReference.cache
 obj/Debug/netcoreapp3.1/BasicAuthMccG3.GeneratedMSBuildEditorConfig.editorconfig
 obj/project.assets.json
 obj/project.nuget.cache
+obj/*
+
+
+
