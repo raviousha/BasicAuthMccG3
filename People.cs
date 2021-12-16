@@ -12,11 +12,12 @@ public class People : IEquatable<People>
     public int Id { get; set; }
 
     public String Password { get; set; }
-    private static List<People> peopleDatabase = new List<People>();
+
+    private static List<People> peopleList = new List<People>();
 
     public override string ToString()
     {
-        return $"| {Id,5} | {Name,28} | {Username,20} | {Password,20} |";
+        return $"| {Id,5} | {Name,25} | {Username,15} | {Password,30} |";
     }
 
     public override bool Equals(object obj)
@@ -35,6 +36,7 @@ public class People : IEquatable<People>
 
         return hashName ^ hashId;
     }
+
     public bool Equals(People other)
     {
         if (Object.ReferenceEquals(other, null)) return false;
@@ -43,63 +45,83 @@ public class People : IEquatable<People>
 
         return Id.Equals(other.Id) && Name.Equals(other.Name);
     }
+
     public void AddData(String choice)
     {
+        String password = null;
+        String firstName = null;
+        String lastName = null;
+        String userName = null;
+        int id = 0;
+
         do
         {
-            //harusnya pakai foreach biar inputan yang separo jalan tidak ditmabhakan di List
-            var lastPerson = peopleDatabase.Count;
-            int id = lastPerson + 1;
-            Console.Write("Input First Name: ");
-            string firstName = Console.ReadLine();
-            Console.Write("Input Last Name: ");
-            string lastName = Console.ReadLine();
-            String password = EntryAndCheckPassworrd() ;
+            var test = peopleList.Count;
+            var user = peopleList.Find(x => x.Username.ToLower().Equals(userName.ToLower()));
+
+            if (test == 0)
+            {
+                do
+                {
+                    Console.Write("Input First Name: ");
+                    firstName = Console.ReadLine();
+                    Console.WriteLine();
+                } while (!NameValidation(firstName) == true);
+
+                do
+                {
+                    Console.Write("Input First Name: ");
+                    lastName = Console.ReadLine();
+                    Console.WriteLine();
+                } while (!NameValidation(lastName) == true);
+
+                id = 1;
+                userName = firstName.Substring(0, 2) + lastName.Substring(0, 2);
+            }
+            else
+            {
+                var lastPerson = peopleList[^1];
+                id = lastPerson.Id + 1;
+                do
+                {
+                    do
+                    {
+                        Console.Write("Input First Name: ");
+                        firstName = Console.ReadLine();
+                        Console.WriteLine();
+                    } while (!NameValidation(firstName) == true);
+
+                    do
+                    {
+                        Console.Write("Input First Name: ");
+                        lastName = Console.ReadLine();
+                        Console.WriteLine();
+                    } while (!NameValidation(lastName) == true);
+
+                    userName = firstName.Substring(0, 2) + lastName.Substring(0, 2);
+
+                    if (user.Username == userName)
+                    {
+                        Random random = new Random();
+                        int num = random.Next(10,99);
+
+                        userName = userName + num;
+                        Console.Clear();
+                    }
+                } while (user.Username == userName);
+            }
+
+            do
+            {
+                Console.Write("Input Password: ");
+                password = Console.ReadLine();
+                Console.WriteLine();
+            } while (!PasswordValidation(password) == true);
+
             String fullName = $"{firstName} {lastName}";
-            String username = firstName.Substring(0, 2) + lastName.Substring(0, 2);
-            peopleDatabase.Add(new People() { Id = id, Name = fullName, Username = username.ToLower(), Password = password });
-            choice = AskRepeatOrNot(firstName, lastName);
-        } while (choice.ToUpper() == "Y");
-    }
+            //userName = firstName.Substring(0, 2) + lastName.Substring(0, 2);
 
-    private string EntryAndCheckPassworrd()
-    {
-        String get = "";
-        do
-        {
-            Console.Write("Input Password: ");
-            get = Console.ReadLine();
-        } while (!ValidatePassword(get));
-        return get;
-    }
-
-    private string AskRepeatOrNot(string firstName, string lastName)
-    {
-        Console.WriteLine();
-        Console.Clear();
-        Console.WriteLine($"{firstName} {lastName} telah ditambahkan");
-        Console.WriteLine();
-        Console.WriteLine("Tambah Produk lagi? (Y/N)");
-        return Console.ReadLine();
-    }
-
-    public void AddData(List<People> peopleList, String choice)
-    {
-        do
-        {
-            var lastPerson = peopleList[^1];
-            int id = lastPerson.Id + 1;
-
-            Console.Write("Input First Name: ");
-            string firstName = Console.ReadLine();
-            Console.Write("Input Last Name: ");
-            string lastName = Console.ReadLine();
-            Console.Write("Input Password: ");
-            String password = Console.ReadLine();
-            String fullName = $"{firstName} {lastName}";
-            String username = firstName.Substring(0, 2) + lastName.Substring(0, 2);
-
-            peopleList.Add(new People() { Id = id, Name = fullName, Username = username.ToLower(), Password = password });
+            peopleList.Add(new People() { Id = id, Name = fullName, Username = userName.ToLower(), Password = BCrypt.Net.BCrypt.HashPassword(password) });
 
             Console.WriteLine();
             Console.Clear();
@@ -107,142 +129,45 @@ public class People : IEquatable<People>
             Console.WriteLine();
             Console.WriteLine("Tambah Produk lagi? (Y/N)");
             choice = Console.ReadLine();
+            Console.Clear();
+
         } while (choice.ToUpper() == "Y");
     }
-    public void UpdateFunctions()
+
+    public void ShowData()
     {
-        Console.Write("Masukan Id User yang mau Di Ubah : ");
-        UpdateData(findIndex(Console.ReadLine()));
-    }
-    public void DeleteFunctions()
-    {
-        Console.Write("Masukan Id User yang mau Di Hapus : ");
-        DeleteDataFromDatabasePeople(findIndex(Console.ReadLine()));
-    }
-    public void SearchFunctions()
-    {
-        Console.Write("Masukan Parameter pencarian : ");
-        int indexSearch = findIndexSearch(Console.ReadLine());
-        if (indexSearch >= 0)
-        {
-            ShowSelectedData(indexSearch);
-        }
-        else
-        {
-            Console.WriteLine("Data Tidak Ditemukan");
-        }
-
-    }
-
-    public void UpdateData(int index)
-    {
-        try
-        {
-            ShowSelectedData(index);
-            Console.Write("Input First Name: ");
-            string firstName = Console.ReadLine();
-            Console.Write("Input Last Name: ");
-            string lastName = Console.ReadLine();
-            Console.Write("Input Password: ");
-            String password = EntryAndCheckPassworrd();
-            String fullName = $"{firstName} {lastName}";
-            String username = firstName.Substring(0, 2) + lastName.Substring(0, 2);
-            peopleDatabase[index].Name = fullName;
-            peopleDatabase[index].Username = username;
-            peopleDatabase[index].Password = password;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine($"Error Messages {e.Message}");
-        }
-
-        Console.WriteLine();
-        Console.WriteLine($"Update Data dengan ID {peopleDatabase[index].Id} Berhasil");
-
-    }
-
-    private void ShowSelectedData(int index)
-    {
-        Console.WriteLine();
-        Console.WriteLine($"{null,3} {peopleDatabase[index].Id} {null,5} {null,10}  {peopleDatabase[index].Name} {null,10} {null,5} {peopleDatabase[index].Password} {null,5} {null,8} ________ {null,5} ");
-        Console.WriteLine();
-    }
-
-
-
-    private void DeleteDataFromDatabasePeople(int i)
-    {
-        peopleDatabase.RemoveAt(i);
-
-    }
-
-
-
-    private int findIndex(string id)
-    {
-        int respond = -1;
-        for (int i = 0; i < peopleDatabase.Count; i++)
-        {
-            if (peopleDatabase[i].Id.Equals(Convert.ToInt32(id)))
-            {
-                respond = i;
-            }
-        }
-        return respond;
-    }
-
-    private int findIndexSearch(string val)
-    {
-        int respond = -1;
-        for (int i = 0; i < peopleDatabase.Count; i++)
-        {
-            try
-            {
-                if (peopleDatabase[i].Id.Equals(Convert.ToInt32(val)))
-                {
-                    respond = i;
-                }
-            }
-            catch (FormatException e)
-            {
-                if (peopleDatabase[i].Name.Contains(val))
-                {
-                    respond = i;
-                }
-                else if (peopleDatabase[i].Username.Contains(val))
-                {
-                    respond = i;
-                }
-            }
-
-        }
-        return respond;
-    }
-
-
-    public void ShowData(List<People> personList)
-    {
-        Console.WriteLine($"{null,3} ID {null,5} {null,10}  Name {null,10} {null,5} Username {null,5} {null,8} Password {null,5} ");
+        Console.WriteLine($"{null,3} ID {null,5} {null,7}  Name {null,10} {null,3} Username {null,5} {null,25} Password {null,5} ");
         //Console.WriteLine($"{null,3} __ {null,5} {null,10}  ____ {null,10} {null,5} ________ {null,5} {null,8} ________ {null,5} ");
         Console.WriteLine();
-
-        foreach (People person in peopleDatabase)
+        foreach (People person in peopleList)
         {
-            Console.WriteLine($"{null,3} {person.Id} {null,5} {null,10}  {person.Name} {null,10} {null,5} {person.Username} {null,5} {null,8} {person.Password} {null,5} ");
-
+            Console.WriteLine($"{person}");
         }
         Console.WriteLine();
     }
 
+    public void DeleteData(String choice)
+    {
+        do
+        {
+            Console.Write("Input ID yang akan dihapus: ");
+            int id = Convert.ToInt32(Console.ReadLine());
+            peopleList.RemoveAt(id - 1);
+            Console.Clear();
+            Console.WriteLine($"User dengan ID {id} berhasil dihapus");
+            Console.WriteLine();
+            Console.Write("Hapus data lagi? (Y/N)");
+            choice = Console.ReadLine();
+        } while (choice.ToUpper() == "Y");
+    }
 
-
-    public void SearchData(List<People> personList, String batas)
+    public void SearchData(String batas)
     {
         String[] menu = new string[2] { "ID", "Name" };
 
         for (int i = 0; i < menu.Length; i++)
         {
-            Console.Write($"{i + 1,38}. {menu[i]}");
+            Console.Write($"{i + 1,40}. {menu[i]}");
             Console.WriteLine();
         }
         Console.WriteLine();
@@ -250,17 +175,19 @@ public class People : IEquatable<People>
         Console.WriteLine();
         Console.Write("Masukkan pilihan: ");
         int index = Convert.ToInt32(Console.ReadLine());
+        Console.WriteLine();
         switch (index)
         {
             case 1:
                 {
-                    Console.Write("Input Search ID: ");
-                    int id = Convert.ToInt32(Console.ReadLine());
+                    Console.Write("Input Search Username: ");
+                    String username = Console.ReadLine();
                     Console.WriteLine();
                     Console.WriteLine(batas);
+                    Console.WriteLine();
                     Console.WriteLine($"{null,3} ID {null,5} {null,10}  Name {null,10} {null,5} Username {null,5} {null,8} Password {null,5}");
                     Console.WriteLine();
-                    Console.WriteLine(personList.Find(x => x.Id.Equals(id)));
+                    Console.WriteLine(peopleList.Find(x => x.Username.Equals(username)));
                     Console.WriteLine();
                     Console.WriteLine(batas);
                     break;
@@ -271,58 +198,88 @@ public class People : IEquatable<People>
                     string name = Console.ReadLine();
                     Console.WriteLine();
                     Console.WriteLine(batas);
-                    Console.WriteLine($"{null,3} ID {null,5} {null,10}  Name {null,10} {null,5} Username {null,5} {null,8} Password {null,5} ");
-                    Console.WriteLine(personList.Find(x => x.Name.ToLower().Contains(name.ToLower())));
+                    Console.WriteLine();
+                    Console.WriteLine($"{null,3} ID {null,5} {null,10} Name {null,10} {null,5} Username {null,5} {null,8} Password {null,5} ");
+                    Console.WriteLine();
+                    foreach (var search in peopleList.Where(x => x.Name.ToLower().Contains(name.ToLower())))
+                    {
+                        Console.WriteLine(search);
+                    }
                     Console.WriteLine();
                     Console.WriteLine(batas);
                     break;
                 }
             default:
+                Console.WriteLine("Input Salah");
                 break;
         }
     }
-    static bool ValidatePasswordP1(string password)
+
+    public void LoginPage()
     {
-        const int MIN_LENGTH = 8;
-        const int MAX_LENGTH = 15;
-
-        if (password == null) throw new ArgumentNullException();
-
-        bool meetsLengthRequirements = password.Length >= MIN_LENGTH && password.Length <= MAX_LENGTH;
-        bool hasUpperCaseLetter = false;
-        bool hasLowerCaseLetter = false;
-        bool hasDecimalDigit = false;
-
-        if (meetsLengthRequirements)
+        try
         {
-            foreach (char c in password)
+            Console.Write("Input Username: ");
+            string username = Console.ReadLine();
+            Console.Write("Input Password: ");
+            string password = Console.ReadLine();
+
+            Console.Clear();
+            Console.WriteLine();
+
+            var user = peopleList.Find(x => x.Username.ToLower().Equals(username.ToLower()));
+
+            if (user.Username == username && BCrypt.Net.BCrypt.Verify(password, user.Password))
             {
-                if (char.IsUpper(c)) hasUpperCaseLetter = true;
-                else if (char.IsLower(c)) hasLowerCaseLetter = true;
-                else if (char.IsDigit(c)) hasDecimalDigit = true;
+                Console.WriteLine("Login Berhasil");
+            }
+            else
+            {
+                Console.WriteLine("Password Salah");
             }
         }
-
-        bool isValid = meetsLengthRequirements
-                    && hasUpperCaseLetter
-                    && hasLowerCaseLetter
-                    && hasDecimalDigit
-                    ;
-        NotifErorPassword(meetsLengthRequirements, "It's Must 8 - 15 Caracter");
-        NotifErorPassword(hasUpperCaseLetter, "It's containt Uppercase letter");
-        NotifErorPassword(hasLowerCaseLetter, "It's containt Lower Case letter");
-        NotifErorPassword(hasDecimalDigit, "It's containt decimal number");
-        return isValid;
-
+        catch (Exception)
+        {
+            Console.WriteLine("Username tidak ditemukan");
+        }
     }
-    private bool ValidatePassword(string password)
+
+    public void UpdateData()
+    {
+        Console.Write("Input Username yang ingin diubah: ");
+        String username = Console.ReadLine();
+        Console.WriteLine();
+
+        foreach (var update in peopleList.Where(x => x.Username == username))
+        {
+            Console.Write("Input First Name: ");
+            string firstName = Console.ReadLine();
+            Console.Write("Input Last Name: ");
+            string lastName = Console.ReadLine();
+            Console.Write("Input Password: ");
+            String password = Console.ReadLine();
+            String fullName = $"{firstName} {lastName}";
+            username = firstName.Substring(0, 2) + lastName.Substring(0, 2);
+
+            update.Name = fullName;
+            update.Username = username;
+            update.Password = password;
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"Update data dengan username {username} berhasil");
+    }
+
+    private bool PasswordValidation(string password)
     {
         var input = password;
-        String ErrorMessage = "";
 
         if (string.IsNullOrWhiteSpace(input))
         {
-            throw new Exception("Password should not be empty");
+            //throw new Exception("Password should not be empty");
+            Console.WriteLine("Password should not be empty");
+            Console.WriteLine();
+            return false;
         }
 
         var hasNumber = new Regex(@"[0-9]+");
@@ -333,36 +290,28 @@ public class People : IEquatable<People>
 
         if (!hasLowerChar.IsMatch(input))
         {
-            ErrorMessage = "Password should contain at least one lower case letter.";
-            NotifErorPassword(false,ErrorMessage);
+            Console.WriteLine("Password should contain At least one lower case letter");
             return false;
         }
         else if (!hasUpperChar.IsMatch(input))
         {
-            ErrorMessage = "Password should contain at least one upper case letter.";
-            NotifErorPassword(false,ErrorMessage);
+            Console.WriteLine("Password should contain At least one upper case letter");
             return false;
         }
         else if (!hasMiniMaxChars.IsMatch(input))
         {
-            ErrorMessage = "Password should not be lesser than 8 or greater than 15 characters.";
-            NotifErorPassword(false,ErrorMessage);
-
+            Console.WriteLine("Password should not be less than 8 or greater than 15 characters");
             return false;
         }
         else if (!hasNumber.IsMatch(input))
         {
-            ErrorMessage = "Password should contain at least one numeric value.";
-            NotifErorPassword(false,ErrorMessage);
-
+            Console.WriteLine("Password should contain At least one numeric value");
             return false;
         }
 
         else if (!hasSymbols.IsMatch(input))
         {
-            ErrorMessage = "Password should contain at least one special (@#@#$%^&&) case character.";
-            NotifErorPassword(false,ErrorMessage);
-
+            Console.WriteLine("Password should contain At least one special case characters");
             return false;
         }
         else
@@ -371,61 +320,29 @@ public class People : IEquatable<People>
         }
     }
 
-    private static void NotifErorPassword(bool state, string v)
+    private bool NameValidation(string name)
     {
-        if (!state)
-        {
-            Console.WriteLine("");
-            Console.WriteLine($"\t\t ~ {v}");
-            Console.WriteLine("");
-        }
-    }
+        var input = name;
 
-    public void LoginPage(List<People> personList)
-    {
-        Console.WriteLine("Coming Soon");
-    }
-    public void LoginPage()
-    {
-        try
+        if (string.IsNullOrWhiteSpace(input))
         {
-            Console.Write("Input Username: ");
-            string username = Console.ReadLine();
-            Console.Write("Input Password: ");
-            string password = EntryAndCheckPassworrd();
-
-            Console.Clear();
+            //throw new Exception();
+            Console.WriteLine("Name input should not be empty");
             Console.WriteLine();
-
-            var user = peopleDatabase.Find(x => x.Username.ToLower().Equals(username.ToLower()));
-
-
-            if (user != null)
-            {
-                if (user.Username == username && password == user.Password)
-                {
-                    Console.Clear();
-                    Console.WriteLine("Password dan username Benar.. Kamu Sukses Masuk :D ");
-                }
-                else if (user.Username == username || password == user.Password)
-                {
-                    Console.Clear();
-                    Console.WriteLine("Username Ditemukan , Password Salah ! belum sukses masuk");
-                }
-                else
-                {
-                    Console.WriteLine("Username dan  Password Salah ! belum sukses masuk");
-                }
-            }
-            else {
-                Console.WriteLine("Kamu Belum Terdaftar, Hubungi admin");
-
-            }
+            return false;
         }
-        catch (Exception e)
+
+        var hasMiniMaxChars = new Regex(@".{2,10}");
+
+        if (!hasMiniMaxChars.IsMatch(input))
         {
-            Console.WriteLine($"Ada yang salah dari cara mu masuk,{e.Message}");
+            Console.WriteLine("Name input should not be less than 2 or greater than 10 characters");
+            Console.WriteLine();
+            return false;
+        }
+        else
+        {
+            return true;
         }
     }
-
 }
